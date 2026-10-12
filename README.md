@@ -27,14 +27,14 @@ The Express API runs on `http://localhost:4000`. Local records are stored in `da
 
 ## Deploy the API to Render
 
-The repository includes `render.yaml` to configure the Express API as a Render Web Service with a persistent disk, health check, and generated JWT secret.
+The repository includes `render.yaml` to configure the Express API as a free Render Web Service with a health check and generated JWT secret.
 
 1. In Render, choose **New + → Blueprint** and connect this GitHub repository. Render reads `render.yaml` from the repository root.
 2. During setup, provide the administrator email and a unique password of at least 16 characters when prompted. The password initializes the production admin account; do not put it in Git or share it in chat.
-3. Review the Render service and disk pricing, then create the Blueprint. This configuration uses a paid service plan and a 1 GB persistent disk.
+3. Review the plan and create the Blueprint. This configuration uses Render's free service plan and does not require a persistent disk.
 4. After deployment, open `https://YOUR-SERVICE.onrender.com/api/health`; it should return `{"status":"ok"}`.
 
-Production uses only the configured administrator account, not the publicly documented demo passwords. It requires `JWT_SECRET` and only accepts browser API requests from the configured Netlify site. The disk stores the JSON database and uploaded reports across restarts. Keep `database/data.json` and `database/uploads/` private; they contain account and patient records. For real patient data, migrate from JSON storage to a managed database and use private, backed-up file storage.
+Production uses only the configured administrator account, not the publicly documented demo passwords. It requires `JWT_SECRET` and only accepts browser API requests from the configured Netlify site. **The free service has an ephemeral filesystem and may spin down while idle:** the JSON database and uploaded reports can be lost on restart or redeploy, and the API may take time to wake. Use it only to try the app with test data. For real patient data or durable accounts and reports, use a paid persistent disk or migrate to a managed database and private, backed-up file storage. Keep `database/data.json` and `database/uploads/` private; they contain account and patient records.
 
 ## Deploy the frontend to Netlify
 

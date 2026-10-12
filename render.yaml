@@ -2,20 +2,14 @@ services:
   - type: web
     name: carelab-api
     runtime: node
-    plan: starter
+    plan: free
     rootDir: backend
     buildCommand: npm ci
     startCommand: npm start
     healthCheckPath: /api/health
-    disk:
-      name: carelab-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATA_DIR
-        value: /var/data
       - key: FRONTEND_URL
         value: https://startling-crisp-18ed52.netlify.app
       - key: ADMIN_EMAIL
