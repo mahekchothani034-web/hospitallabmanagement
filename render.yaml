@@ -11,7 +11,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: FRONTEND_URL
-        value: https://taupe-cucurucho-920059.netlify.app
+        value: https://hospitallabmanagement.netlify.app
       - key: ADMIN_EMAIL
         sync: false
       - key: ADMIN_PASSWORD
