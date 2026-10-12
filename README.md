@@ -13,15 +13,23 @@ A React + Express starter for a diagnostic lab portal. The English-language inte
    npm.cmd run dev
    ```
 
-3. Start the frontend in a second terminal:
+3. Create a frontend environment file from the example and point it at your backend URL:
 
    ```bash
    cd frontend
+   copy .env.example .env
+   ```
+
+   Edit `frontend/.env` so `VITE_API_URL` matches your backend, usually `http://localhost:4000` for local development.
+
+4. Start the frontend in a second terminal:
+
+   ```bash
    npm.cmd install
    npm.cmd run dev
    ```
 
-4. Open the Vite URL shown in the frontend terminal (usually `http://localhost:5173`).
+5. Open the Vite URL shown in the frontend terminal (usually `http://localhost:5173`).
 
 The Express API runs on `http://localhost:4000`. Local records are stored in `database/data.json`, and uploaded reports are stored in `database/uploads/`.
 

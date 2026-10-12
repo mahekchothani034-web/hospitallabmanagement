@@ -1,4 +1,7 @@
 node_modules/
 dist/
+.env
+frontend/.env
+backend/.env
 database/data.json
 database/uploads/

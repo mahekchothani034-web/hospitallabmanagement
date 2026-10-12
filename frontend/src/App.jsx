@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 
 const roles = ["admin", "doctor", "patient", "technician", "receptionist"];
 const roleLabels = { admin: "Admin", doctor: "Doctor", patient: "Patient", technician: "Lab Technician", receptionist: "Receptionist" };
-const apiBaseUrl = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+const apiBaseUrl = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:4000" : "")).replace(/\/+$/, "");
 
 function apiUrl(path) {
-  if (import.meta.env.PROD && !apiBaseUrl) {
-    throw new Error("CareLab API is not configured. Set VITE_API_URL to your deployed backend URL.");
+  if (!apiBaseUrl) {
+    throw new Error("CareLab API is not configured. Set VITE_API_URL to your deployed backend URL (for example https://your-api.onrender.com).");
   }
   return `${apiBaseUrl}${path}`;
 }
