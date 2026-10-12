@@ -38,12 +38,12 @@ Production uses only the configured administrator account, not the publicly docu
 
 ## Deploy the frontend to Netlify
 
-The repository includes `netlify.toml` with the frontend build settings and a single-page-app fallback, so refreshing or opening the app directly will serve the React page instead of a 404.
+The repository includes `netlify.toml` with the frontend build settings, the public Render API URL, and a single-page-app fallback, so refreshing or opening the app directly will serve the React page instead of a 404. Netlify rebuilds include the API URL automatically; if the Netlify site is not connected to this GitHub repository, add `VITE_API_URL=https://carelab-api.onrender.com` to its environment variables and redeploy manually.
 
 1. Deploy this repository as a site on Netlify. Netlify will use the settings in `netlify.toml` (`frontend` as the base directory and `npm run build` as the build command).
-2. In the Netlify site's environment variables, set `VITE_API_URL` to your Render API's public origin, for example `https://your-service.onrender.com` (do not add `/api` at the end). Trigger a new deploy after setting it.
+2. If you use a different Render API service, update `VITE_API_URL` in `netlify.toml` to that service's public origin (do not add `/api` at the end) and redeploy.
 
-Without `VITE_API_URL`, production API requests show a configuration error rather than silently calling a nonexistent Netlify `/api` route.
+If a Netlify deploy fails, verify that the base directory is `frontend`, the build command is `npm run build`, and the publish directory is `dist`.
 
 ### Email verification for password reset
 
