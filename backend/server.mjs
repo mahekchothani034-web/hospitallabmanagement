@@ -16,28 +16,44 @@ const databaseDirectory = process.env.DATA_DIR || path.resolve(root, "..", "data
 const dataPath = path.join(databaseDirectory, "data.json");
 const uploadDirectory = path.join(databaseDirectory, "uploads");
 const port = Number(process.env.PORT || 4000);
-if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+const isProduction = process.env.NODE_ENV === "production";
+if (isProduction && !process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET must be set in production.");
+}
+if (isProduction && (!process.env.ADMIN_EMAIL?.trim() || !process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD.length < 16)) {
+  throw new Error("Set ADMIN_EMAIL and an ADMIN_PASSWORD of at least 16 characters in production.");
+}
+let frontendOrigin;
+if (isProduction) {
+  try {
+    const frontendUrl = new URL(process.env.FRONTEND_URL);
+    if (frontendUrl.protocol !== "https:") throw new Error();
+    frontendOrigin = frontendUrl.origin;
+  } catch {
+    throw new Error("Set FRONTEND_URL to the HTTPS origin of the deployed frontend.");
+  }
 }
 const jwtSecret = process.env.JWT_SECRET || "development-only-change-this-secret";
 
 mkdirSync(uploadDirectory, { recursive: true });
 
 function initialData() {
-  const passwordHash = bcrypt.hashSync("CareLab123!", 10);
+  const passwordHash = bcrypt.hashSync(isProduction ? process.env.ADMIN_PASSWORD : "CareLab123!", 10);
   const adminId = randomUUID();
   const doctorId = randomUUID();
   const patientId = randomUUID();
   const technicianId = randomUUID();
   const receptionistId = randomUUID();
   return {
-    users: [
-      { id: adminId, name: "CareLab Admin", email: "admin@carelab.test", phone: "9876500001", role: "admin", passwordHash },
-      { id: doctorId, name: "Dr. Aditi Kulkarni", email: "doctor@carelab.test", phone: "9876500002", role: "doctor", specialization: "Pathology", passwordHash },
-      { id: patientId, name: "Aarav Patil", email: "patient@carelab.test", phone: "9876500003", role: "patient", passwordHash },
-      { id: technicianId, name: "Neha Shah", email: "tech@carelab.test", phone: "9876500004", role: "technician", passwordHash },
-      { id: receptionistId, name: "Maya Joshi", email: "reception@carelab.test", phone: "9876500005", role: "receptionist", passwordHash },
-    ],
+    users: isProduction
+      ? [{ id: adminId, name: "CareLab Admin", email: process.env.ADMIN_EMAIL.trim().toLowerCase(), phone: "", role: "admin", passwordHash }]
+      : [
+          { id: adminId, name: "CareLab Admin", email: "admin@carelab.test", phone: "9876500001", role: "admin", passwordHash },
+          { id: doctorId, name: "Dr. Aditi Kulkarni", email: "doctor@carelab.test", phone: "9876500002", role: "doctor", specialization: "Pathology", passwordHash },
+          { id: patientId, name: "Aarav Patil", email: "patient@carelab.test", phone: "9876500003", role: "patient", passwordHash },
+          { id: technicianId, name: "Neha Shah", email: "tech@carelab.test", phone: "9876500004", role: "technician", passwordHash },
+          { id: receptionistId, name: "Maya Joshi", email: "reception@carelab.test", phone: "9876500005", role: "receptionist", passwordHash },
+        ],
     tests: [
       { id: randomUUID(), name: "Blood Test", category: "Blood", price: 450 },
       { id: randomUUID(), name: "Urine Routine", category: "Urine", price: 300 },
@@ -61,6 +77,27 @@ if (!existsSync(dataPath)) writeFileSync(dataPath, JSON.stringify(initialData(),
 
 let data = JSON.parse(readFileSync(dataPath, "utf8"));
 data.passwordResets ||= [];
+if (isProduction) {
+  const demoEmails = new Set([
+    "admin@carelab.test",
+    "doctor@carelab.test",
+    "patient@carelab.test",
+    "tech@carelab.test",
+    "reception@carelab.test",
+  ]);
+  data.users = data.users.filter((user) => !demoEmails.has(user.email.toLowerCase()));
+  if (!data.users.some((user) => user.role === "admin")) {
+    data.users.push({
+      id: randomUUID(),
+      name: "CareLab Admin",
+      email: process.env.ADMIN_EMAIL.trim().toLowerCase(),
+      phone: "",
+      role: "admin",
+      passwordHash: bcrypt.hashSync(process.env.ADMIN_PASSWORD, 10),
+    });
+  }
+  writeFileSync(dataPath, JSON.stringify(data, null, 2));
+}
 function save() {
   writeFileSync(dataPath, JSON.stringify(data, null, 2));
 }
@@ -93,7 +130,7 @@ function visibleTo(user, booking) {
 }
 
 const app = express();
-app.use(cors());
+app.use(isProduction ? cors({ origin: frontendOrigin }) : cors());
 app.use(express.json({ limit: "1mb" }));
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
