@@ -38,7 +38,6 @@ function App() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [authMode, setAuthMode] = useState("login");
   const [resetStep, setResetStep] = useState("email");
   const [resetEmail, setResetEmail] = useState("");
 
@@ -89,7 +88,7 @@ function App() {
     setBusy(true); setError("");
     const form = Object.fromEntries(new FormData(event.currentTarget));
     try {
-      const result = await api(`/api/auth/${authMode === "register" ? "register" : "login"}`, {
+      const result = await api(`/api/auth/${page === "register" ? "register" : "login"}`, {
         method: "POST", body: JSON.stringify(form),
       });
       localStorage.setItem("carelab-session", JSON.stringify(result));
@@ -164,7 +163,7 @@ function App() {
         </nav>
         <div className="nav-actions">
           {session ? <><button className="button button-light" onClick={() => navigate("dashboard")}>Dashboard</button><button className="button button-dark" onClick={signOut}>Log out</button></> :
-            <><button className="button button-light" onClick={() => { setAuthMode("login"); navigate("login"); }}>Login</button><button className="button button-dark" onClick={() => { setAuthMode("register"); navigate("register"); }}>Register</button></>}
+            <><button className="button button-light" onClick={() => navigate("login")}>Login</button><button className="button button-dark" onClick={() => navigate("register")}>Register</button></>}
         </div>
       </header>
 
@@ -176,7 +175,7 @@ function App() {
         {page === "tests" && <TestDirectory tests={tests} navigate={navigate} />}
         {page === "doctors" && <DoctorDirectory doctors={doctors} />}
         {page === "contact" && <Contact onSubmit={submitContact} busy={busy} />}
-        {(page === "login" || page === "register" || page === "forgot-password") && <AuthPage mode={page} resetStep={resetStep} resetEmail={resetEmail} setMode={(mode) => { setAuthMode(mode); setResetStep("email"); setResetEmail(""); navigate(mode); }} onSubmit={page === "forgot-password" ? resetStep === "email" ? requestPasswordCode : submitPasswordReset : submitAuth} onResendCode={resendPasswordCode} busy={busy} />}
+        {(page === "login" || page === "register" || page === "forgot-password") && <AuthPage mode={page} resetStep={resetStep} resetEmail={resetEmail} setMode={(mode) => { setResetStep("email"); setResetEmail(""); navigate(mode); }} onSubmit={page === "forgot-password" ? resetStep === "email" ? requestPasswordCode : submitPasswordReset : submitAuth} onResendCode={resendPasswordCode} busy={busy} />}
         {page === "dashboard" && (session
           ? dashboard ? <Dashboard data={dashboard} session={session} reload={loadDashboard} setError={setError} setNotice={setNotice} navigate={navigate} />
             : <section className="section empty"><p>Loading your dashboard…</p></section>
