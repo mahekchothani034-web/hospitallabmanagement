@@ -7,7 +7,7 @@ import multer from "multer";
 import PDFDocument from "pdfkit";
 import nodemailer from "nodemailer";
 import { createHash, randomInt, randomUUID, timingSafeEqual } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -369,6 +369,24 @@ app.patch("/api/bookings/:id", requireAuth, allowRoles("admin", "technician"), (
   res.json(booking);
 });
 
+app.delete("/api/bookings/:id", requireAuth, allowRoles("admin"), (req, res) => {
+  const bookingIndex = data.bookings.findIndex((entry) => entry.id === req.params.id);
+  if (bookingIndex < 0) return res.status(404).json({ error: "Booking not found." });
+  const booking = data.bookings[bookingIndex];
+  const reports = data.reports.filter((entry) => entry.bookingId === booking.id);
+
+  reports.forEach((report) => {
+    if (!report.pdfName) return;
+    const filePath = path.join(uploadDirectory, path.basename(report.pdfName));
+    if (existsSync(filePath)) unlinkSync(filePath);
+  });
+
+  data.bookings.splice(bookingIndex, 1);
+  data.reports = data.reports.filter((entry) => entry.bookingId !== booking.id);
+  save();
+  res.status(204).end();
+});
+
 app.post("/api/reports/:bookingId/pdf", requireAuth, allowRoles("admin", "technician"), (req, res, next) => {
   const upload = multer({
     storage: multer.diskStorage({
@@ -388,8 +406,10 @@ app.post("/api/reports/:bookingId/pdf", requireAuth, allowRoles("admin", "techni
     const booking = data.bookings.find((entry) => entry.id === req.params.bookingId);
     if (!booking) return res.status(404).json({ error: "Booking not found." });
     if (!booking.result.trim()) return res.status(400).json({ error: "Enter the test result before uploading a report." });
+    const previousIndex = data.reports.findIndex((entry) => entry.bookingId === booking.id);
+    const previousReport = previousIndex >= 0 ? data.reports[previousIndex] : null;
     const report = {
-      id: randomUUID(),
+      id: previousReport?.id || randomUUID(),
       bookingId: booking.id,
       patientId: booking.patientId,
       testName: booking.testName,
@@ -400,8 +420,7 @@ app.post("/api/reports/:bookingId/pdf", requireAuth, allowRoles("admin", "techni
       updatedBy: req.user.id,
     };
     if (!req.file) return res.status(400).json({ error: "Choose a PDF report to upload." });
-    const previous = data.reports.findIndex((entry) => entry.bookingId === booking.id);
-    if (previous >= 0) data.reports[previous] = report;
+    if (previousIndex >= 0) data.reports[previousIndex] = report;
     else data.reports.push(report);
     booking.status = "Done";
     if (req.user.role === "technician") booking.technicianId = req.user.id;
@@ -423,7 +442,11 @@ app.get("/api/reports/:id/download", requireAuth, async (req, res, next) => {
     const booking = data.bookings.find((entry) => entry.id === report.bookingId);
     const fileName = `${report.testName.replace(/[^\w.-]+/g, "-")}-report.pdf`;
     if (report.pdfName) {
-      return res.download(path.join(uploadDirectory, path.basename(report.pdfName)), fileName);
+      const uploadedFile = path.join(uploadDirectory, path.basename(report.pdfName));
+      if (!existsSync(uploadedFile)) {
+        return res.status(404).json({ error: "The uploaded report file is no longer available. Ask the lab to upload it again." });
+      }
+      return res.download(uploadedFile, fileName);
     }
 
     const pdf = await new Promise((resolve, reject) => {

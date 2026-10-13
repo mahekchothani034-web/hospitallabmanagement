@@ -75,7 +75,7 @@ All demo users use password `CareLab123!`.
 | Lab Technician | `tech@carelab.test` |
 | Receptionist | `reception@carelab.test` |
 
-New registrations create patient accounts. Receptionists can register patients and book tests; doctors can request tests for registered patients. Admins can add doctors and staff accounts, add or edit test costs, manage booking progress and results, and upload report PDFs. Technicians update sample status, enter results, and upload PDF reports. Patients can track their samples and download completed reports.
+New registrations create patient accounts. Receptionists can register patients and book tests; doctors can request tests for registered patients. Admins can add doctors and staff accounts, add or edit test costs, manage booking progress and results, upload report PDFs, and delete bookings. Technicians update sample status, enter results, and upload PDF reports. Patients can track their samples and download completed reports, including the original PDF uploaded by the lab.
 
 ## Before production
 
